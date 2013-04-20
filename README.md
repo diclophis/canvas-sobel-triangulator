@@ -30,4 +30,13 @@ http://gamedev.stackexchange.com/questions/6721/implementing-a-2d-destructible-l
 
 http://gamedev.stackexchange.com/questions/28718/how-can-i-convert-a-2d-bitmap-used-for-terrain-to-a-2d-polygon-mesh-for-collis
 
+https://gist.github.com/adammiller/826148
+
+http://mourner.github.io/simplify-js/
+
+http://stackoverflow.com/questions/13730062/simplifying-svg-path-strings-by-reducing-number-of-nodes
+
+http://paperjs.org/tutorials/paths/smoothing-simplifying-flattening/
+
+http://www.wizards23.net/projects2011/surfaceaugmenter/SobelOperatorDemo.html?
 

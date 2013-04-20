@@ -88,7 +88,7 @@ var get_polygon_centroid = function(points) {
 };
 
 var mergeVertices = function(vertices) {
-  var precision = 0.1;
+  var precision = 0.25;
 
   var verticesMap = new Object();
   var unique = new Array();
@@ -129,8 +129,7 @@ function handleTestClick()
 
   points.sort(sortFunc);
 
-  //var mergedPoints = mergeVertices(points);
-  //console.log("merged", mergedPoints.length);
+  var mergedPoints = mergeVertices(points);
 
   simplifiedPoints = simplify(points, 2, true);
 
@@ -140,6 +139,7 @@ function handleTestClick()
   //contextOut.putImageData(grayPixels, 0,0);
 
   //console.log("unmerged", points.length);
+  //console.log("merged", mergedPoints.length);
   //console.log("simplified", simplifiedPoints.length);
   //console.log("simplifiedMerged", simplifiedMergedPoints.length);
 
@@ -166,7 +166,7 @@ function handleTestClick()
     contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 4, 4);
   }
 
-  var swctx = new poly2tri.SweepContext(simplifiedMergedPoints);
+  var swctx = new poly2tri.SweepContext(mergedPoints);
 
   swctx.triangulate();
   var triangles = swctx.getTriangles();
@@ -183,8 +183,10 @@ function handleTestClick()
     ctx.closePath();
   };
 
+  //var TRIANGLE_FILL_STYLE = "#e0c4ef";
+  //var TRIANGLE_STROKE_STYLE = "#911ccd";
   var TRIANGLE_FILL_STYLE = "#e0c4ef";
-  var TRIANGLE_STROKE_STYLE = "#911ccd";
+  var TRIANGLE_STROKE_STYLE = TRIANGLE_FILL_STYLE;
   var CONSTRAINT_STYLE = "rgba(0,0,0,0.6)";
   var ERROR_STYLE = "rgba(255,0,0,0.8)";
   var MARGIN = 64;
@@ -251,9 +253,9 @@ var step = function (timestamp) {
 
   context.fillStyle = 'red';
   context.fillRect(64, 64, 32, 32);
-  //context.fillRect(64 + ((Math.sin(time * 0.0005) * 44.0)), 64 + ((Math.sin(time * 0.0005) * 44.0)), 32, 32);
+  context.fillRect(64 + ((Math.sin(time * 0.0005) * 30.0)), 64 + ((Math.sin(time * 0.0005) * 30.0)), 32, 32);
   context.beginPath();
-  context.arc(64 + ((Math.sin(time * 0.0005) * 32.0)), 64 + ((Math.sin(time * 0.0005) * 32.0)), 10, 0, 2 * Math.PI, false);
+  context.arc(64 + ((Math.sin(time * 0.0005) * 16.0)), 64 + ((Math.cos(time * 0.0005) * 16.0)), 17, 0, 2 * Math.PI, false);
   context.closePath();
   context.fill();
 

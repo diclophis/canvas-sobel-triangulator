@@ -115,6 +115,30 @@ var get_polygon_centroid = function(points) {
   return centroid;
 };
 
+var mergeVertices = function(vertices) {
+  var precision = 0.1;
+
+  var verticesMap = new Object();
+  var unique = new Array();
+  var i;
+  var il;
+
+  for (i = 0, il = vertices.length; i < il; i++) {
+    var v = vertices[i];
+    var key = [Math.round(v.x * precision), Math.round(v.y * precision)].join( '_' );
+    if (verticesMap[key] === undefined) {
+      verticesMap[key] = i;
+      unique.push(vertices[i]);
+      //changes[ i ] = unique.length - 1;
+    } else {
+      //console.log('Duplicate vertex found. ', i, ' could be using ', verticesMap[key], v);
+      //changes[ i ] = changes[ verticesMap[ key ] ];
+    }
+  }
+
+  return unique;
+};
+
 var hist = {};
 function handleTestClick()
 {
@@ -137,9 +161,13 @@ function handleTestClick()
 
   points.sort(sortFunc);
 
-  console.log(points.length);
+  console.log("unmerged", points.length);
 
-  simplifiedPoints = simplify(points);
+  var mergedPoints = mergeVertices(points);
+  
+  console.log("merged", mergedPoints.length);
+
+  simplifiedPoints = simplify(points, 1, true);
 
   console.log(simplifiedPoints.length);
   
@@ -152,28 +180,127 @@ function handleTestClick()
 
   contextOut.fillStyle = 'green';
   for (var i=0; i<points.length; i++) {
-    //console.log(simplifiedPoints[i]);
-    //contextOut.arc(simplifiedPoints[i].x, simplifiedPoints[i].y, 10, 0, 2 * Math.PI);
     contextOut.fillRect(points[i].x, points[i].y, 1, 1);
-    //console.log(points[i]);
-    //if (i > 150) {
-    //  break;
-    //}
   }
+
+  contextOut.fillStyle = 'purple';
+  for (var i=0; i<mergedPoints.length; i++) {
+    contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
+  }
+
+  //var contour = new Array();
 
   contextOut.fillStyle = 'red';
   for (var i=0; i<simplifiedPoints.length; i++) {
     //console.log(simplifiedPoints[i]);
     //contextOut.arc(simplifiedPoints[i].x, simplifiedPoints[i].y, 10, 0, 2 * Math.PI);
     contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 2, 2);
+    //contour.push(new poly2tri.Point(simplifiedPoints[i].x, simplifiedPoints[i].y));
   }
+
+
+  //var contour = [
+  //  new poly2tri.Point(100, 100),
+  //  new poly2tri.Point(100, 300),
+  //  new poly2tri.Point(300, 300),
+  //  new poly2tri.Point(300, 100)
+  //];
+  var swctx = new poly2tri.SweepContext(simplifiedPoints);
+
+  swctx.triangulate();
+  var triangles = swctx.getTriangles();
+
+  //console.log(triangles.length, triangles);
+
+  var polygonPath = function(ctx, points) {
+    ctx.beginPath();
+    points.forEach(function(point, index) {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+    ctx.closePath();
+  };
+
+  var TRIANGLE_FILL_STYLE = "#e0c4ef";
+  var TRIANGLE_STROKE_STYLE = "#911ccd";
+  var CONSTRAINT_STYLE = "rgba(0,0,0,0.6)";
+  var ERROR_STYLE = "rgba(255,0,0,0.8)";
+  var MARGIN = 16;
+
+  // auto scale / translate
+  bounds = swctx.getBoundingBox();
+  xscale = (context.canvas.width - 2 * MARGIN) / (bounds.max.x - bounds.min.x);
+  yscale = (context.canvas.height - 2 * MARGIN) / (bounds.max.y - bounds.min.y);
+  scale = Math.min(xscale, yscale);
+  //scale = 1;
+  //context.translate(MARGIN, MARGIN);
+  context.scale(scale, scale);
+  context.translate(-bounds.min.x, -bounds.min.y);
+  linescale = 1 / scale;
+
+  // draw result
+  context.lineWidth = linescale;
+  context.fillStyle = TRIANGLE_FILL_STYLE;
+  context.strokeStyle = TRIANGLE_STROKE_STYLE;
+  //context.setLineDash(null);
+
+  triangles.forEach(function(t) {
+    polygonPath(context, [t.getPoint(0), t.getPoint(1), t.getPoint(2)]);
+    context.fill();
+    context.stroke();
+  });
+
+  /*
+  // draw constraints
+  context.lineWidth = 4 * linescale;
+  context.strokeStyle = CONSTRAINT_STYLE;
+  context.fillStyle = CONSTRAINT_STYLE;
+  //context.setLineDash([10 * linescale, 5 * linescale]);
+
+  polygonPath(context, contour);
+  context.stroke();
+  */
+
+  //holes.forEach(function(hole) {
+  //    polygonPath(ctx, hole);
+  //    ctx.stroke();
+  //});
+
+/*
+      points.forEach(function(point) {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, ctx.lineWidth, 0, 2 * Math.PI, false);
+          ctx.closePath();
+          ctx.fill();
+      });
+
+  // highlight errors, if any
+  if (error_points) {
+      ctx.lineWidth = 4 * linescale;
+      ctx.fillStyle = ERROR_STYLE;
+      error_points.forEach(function(point) {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, ctx.lineWidth, 0, 2 * Math.PI, false);
+          ctx.closePath();
+          ctx.fill();
+      });
+  }
+*/
+
+
+
+
+
 }
 
 var step = function (timestamp) {
   var progress = timestamp - start;
   start = timestamp;
 
-  window.requestAnimationFrame(step);
+  //window.requestAnimationFrame(step);
 };
 
 var main = function(ev) {

@@ -1,0 +1,13 @@
+/* style */
+
+body {
+  margin: 0;
+}
+
+canvas {
+  background-color: gray;
+  width: 512px;
+  height: 512px;
+  transform-origin: top left;
+  transform: scale3d(0.5, 0.5, 0.5);
+}

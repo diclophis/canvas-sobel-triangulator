@@ -6,10 +6,7 @@
   window.requestAnimationFrame = requestAnimationFrame;
 })();
 
-var img;
-var imgWidth, imgHeight;
-
-var imgScale = 1.0;
+var time = 0;
 var points = [];
 var pixels, bwPixels;
 
@@ -132,22 +129,19 @@ function handleTestClick()
 
   points.sort(sortFunc);
 
-  console.log("unmerged", points.length);
+  //var mergedPoints = mergeVertices(points);
+  //console.log("merged", mergedPoints.length);
 
-  var mergedPoints = mergeVertices(points);
-  
-  console.log("merged", mergedPoints.length);
-
-  simplifiedPoints = simplify(points, 1, true);
-
-  console.log("simplified", simplifiedPoints.length);
+  simplifiedPoints = simplify(points, 2, true);
 
   simplifiedMergedPoints = mergeVertices(simplifiedPoints);
 
-  console.log("simplifiedMerged", simplifiedMergedPoints.length);
-  
   //var grayPixels = A2RGBA(bwPixelsSobolev, context);
   //contextOut.putImageData(grayPixels, 0,0);
+
+  //console.log("unmerged", points.length);
+  //console.log("simplified", simplifiedPoints.length);
+  //console.log("simplifiedMerged", simplifiedMergedPoints.length);
 
   contextOut.fillStyle = 'yellow';
   contextOut.fillRect(centroid.x, centroid.y, 1, 1);
@@ -157,10 +151,10 @@ function handleTestClick()
     contextOut.fillRect(points[i].x, points[i].y, 1, 1);
   }
 
-  contextOut.fillStyle = 'purple';
-  for (var i=0; i<mergedPoints.length; i++) {
-    contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
-  }
+  //contextOut.fillStyle = 'purple';
+  //for (var i=0; i<mergedPoints.length; i++) {
+  //  contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
+  //}
 
   contextOut.fillStyle = 'red';
   for (var i=0; i<simplifiedPoints.length; i++) {
@@ -169,7 +163,7 @@ function handleTestClick()
 
   contextOut.fillStyle = 'blue';
   for (var i=0; i<simplifiedMergedPoints.length; i++) {
-    contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 2, 2);
+    contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 4, 4);
   }
 
   var swctx = new poly2tri.SweepContext(simplifiedMergedPoints);
@@ -193,7 +187,7 @@ function handleTestClick()
   var TRIANGLE_STROKE_STYLE = "#911ccd";
   var CONSTRAINT_STYLE = "rgba(0,0,0,0.6)";
   var ERROR_STYLE = "rgba(255,0,0,0.8)";
-  var MARGIN = 16;
+  var MARGIN = 64;
 
   // auto scale / translate
   bounds = swctx.getBoundingBox();
@@ -248,7 +242,25 @@ function handleTestClick()
 var step = function (timestamp) {
   var progress = timestamp - start;
   start = timestamp;
-  //window.requestAnimationFrame(step);
+  time += progress;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  contextOut.clearRect(0, 0, canvas.width, canvas.height);
+  contextTri.clearRect(0, 0, canvas.width, canvas.height);
+  contextTri.save();
+
+  context.fillStyle = 'red';
+  context.fillRect(64, 64, 32, 32);
+  //context.fillRect(64 + ((Math.sin(time * 0.0005) * 44.0)), 64 + ((Math.sin(time * 0.0005) * 44.0)), 32, 32);
+  context.beginPath();
+  context.arc(64 + ((Math.sin(time * 0.0005) * 32.0)), 64 + ((Math.sin(time * 0.0005) * 32.0)), 10, 0, 2 * Math.PI, false);
+  context.closePath();
+  context.fill();
+
+  handleTestClick();
+
+  contextTri.restore();
+  window.requestAnimationFrame(step);
 };
 
 var main = function(ev) {
@@ -265,11 +277,6 @@ var main = function(ev) {
   canvasTri.width = canvasTri.offsetWidth;
   canvasTri.height = canvasTri.offsetHeight;
 
-  context.fillStyle = 'red';
-  context.fillRect(64, 64, 32, 32);
-  context.fillRect(80, 80, 32, 32);
-
-  handleTestClick();
 
   step(start);
 };

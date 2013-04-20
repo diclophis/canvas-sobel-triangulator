@@ -62,7 +62,6 @@ var sortFuncCenteredAt = function(center) {
   var sortClockwise2 = function (a, b) {
     var aa = Math.atan2(a.y - center.y, a.x - center.x);
     var bb = Math.atan2(b.y - center.y, b.x - center.x);
-
     if (aa > bb) {
       return 1;
     } else if (aa < bb) {
@@ -87,9 +86,7 @@ var get_polygon_centroid = function(points) {
   return centroid;
 };
 
-var mergeVertices = function(vertices) {
-  var precision = 0.25;
-
+var mergeVertices = function(vertices, precision) {
   var verticesMap = new Object();
   var unique = new Array();
   var i;
@@ -97,12 +94,12 @@ var mergeVertices = function(vertices) {
 
   for (i = 0, il = vertices.length; i < il; i++) {
     var v = vertices[i];
-    var key = [Math.round(v.x * precision), Math.round(v.y * precision)].join( '_' );
+    var key = [Math.floor(v.x / precision) * precision, Math.floor(v.y / precision) * precision].join( '_' );
     if (verticesMap[key] === undefined) {
       verticesMap[key] = i;
       unique.push(vertices[i]);
     } else {
-      //console.log('Duplicate vertex found. ', i, ' could be using ', verticesMap[key], v);
+      //console.log('Duplicate vertex found. ', i, ' could be using ', key, v.x, v.y);
     }
   }
 
@@ -123,17 +120,21 @@ function handleTestClick()
 
   applyKernelAlphaOnPixels(bwPixels, dxx, dyy, bwPixelsSobolev, points)
 
+  var p = 8;
+  var p2 = 4;
+  var p3 = 1;
+
+  var mergedPoints = mergeVertices(points, p);
+
   var centroid = get_polygon_centroid(points);
 
   var sortFunc = sortFuncCenteredAt(centroid);
 
-  points.sort(sortFunc);
+  mergedPoints.sort(sortFunc);
 
-  var mergedPoints = mergeVertices(points);
+  simplifiedPoints = simplify(mergedPoints, p2, false);
 
-  simplifiedPoints = simplify(points, 2, true);
-
-  simplifiedMergedPoints = mergeVertices(simplifiedPoints);
+  simplifiedMergedPoints = mergeVertices(simplifiedPoints, p3);
 
   //var grayPixels = A2RGBA(bwPixelsSobolev, context);
   //contextOut.putImageData(grayPixels, 0,0);
@@ -143,7 +144,7 @@ function handleTestClick()
   //console.log("simplified", simplifiedPoints.length);
   //console.log("simplifiedMerged", simplifiedMergedPoints.length);
 
-  contextOut.fillStyle = 'yellow';
+  contextOut.fillStyle = 'black';
   contextOut.fillRect(centroid.x, centroid.y, 1, 1);
 
   contextOut.fillStyle = 'green';
@@ -156,18 +157,18 @@ function handleTestClick()
   //  contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
   //}
 
-  contextOut.fillStyle = 'red';
-  for (var i=0; i<simplifiedPoints.length; i++) {
-    contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 2, 2);
-  }
+  //contextOut.fillStyle = 'red';
+  //for (var i=0; i<simplifiedPoints.length; i++) {
+  //  contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 1, 1);
+  //}
 
   contextOut.fillStyle = 'blue';
   for (var i=0; i<simplifiedMergedPoints.length; i++) {
-    contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 4, 4);
+    contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 3, 3);
   }
 
-  var swctx = new poly2tri.SweepContext(mergedPoints);
-
+  var swctx = new poly2tri.SweepContext(simplifiedMergedPoints);
+  swctx.addPoint(centroid);
   swctx.triangulate();
   var triangles = swctx.getTriangles();
 
@@ -183,10 +184,10 @@ function handleTestClick()
     ctx.closePath();
   };
 
-  //var TRIANGLE_FILL_STYLE = "#e0c4ef";
-  //var TRIANGLE_STROKE_STYLE = "#911ccd";
   var TRIANGLE_FILL_STYLE = "#e0c4ef";
-  var TRIANGLE_STROKE_STYLE = TRIANGLE_FILL_STYLE;
+  var TRIANGLE_STROKE_STYLE = "#911ccd";
+  //var TRIANGLE_FILL_STYLE = "#e0c4ef";
+  //var TRIANGLE_STROKE_STYLE = TRIANGLE_FILL_STYLE;
   var CONSTRAINT_STYLE = "rgba(0,0,0,0.6)";
   var ERROR_STYLE = "rgba(255,0,0,0.8)";
   var MARGIN = 64;
@@ -249,7 +250,6 @@ var step = function (timestamp) {
   context.clearRect(0, 0, canvas.width, canvas.height);
   contextOut.clearRect(0, 0, canvas.width, canvas.height);
   contextTri.clearRect(0, 0, canvas.width, canvas.height);
-  contextTri.save();
 
   context.fillStyle = 'red';
   context.fillRect(64, 64, 32, 32);
@@ -259,9 +259,10 @@ var step = function (timestamp) {
   context.closePath();
   context.fill();
 
+  contextTri.save();
   handleTestClick();
-
   contextTri.restore();
+
   window.requestAnimationFrame(step);
 };
 
@@ -279,10 +280,7 @@ var main = function(ev) {
   canvasTri.width = canvasTri.offsetWidth;
   canvasTri.height = canvasTri.offsetHeight;
 
-
   step(start);
 };
 
-
 document.addEventListener('DOMContentLoaded', main);
-

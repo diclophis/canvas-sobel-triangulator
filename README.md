@@ -40,3 +40,6 @@ http://paperjs.org/tutorials/paths/smoothing-simplifying-flattening/
 
 http://www.wizards23.net/projects2011/surfaceaugmenter/SobelOperatorDemo.html?
 
+http://gamedev.stackexchange.com/questions/13229/sorting-array-of-points-in-clockwise-order
+
+http://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order

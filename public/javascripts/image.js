@@ -85,18 +85,19 @@ function applyKernelAlphaOnPixel(pixels, kernel, x, y)
 	return sum*kernel.scale;
 }
 
-function applyKernelAlphaOnPixels(pixels, kernelx, kernely, pixelsOut)
+function applyKernelAlphaOnPixels(pixels, kernelx, kernely, pixelsOut, pointsOut)
 {
 	var outIndex = 0;
 	for (y = 0; y < pixels.height; y++) {
 		for (x = 0; x < pixels.width; x++) {
-			//if (mask.data[outIndex] > 0) {
-				var dx = applyKernelAlphaOnPixel(pixels, kernelx, x, y);
-				var dy = applyKernelAlphaOnPixel(pixels, kernely, x, y);
-				pixelsOut.data[outIndex] = Math.sqrt(dx*dx+dy*dy);
-			//}
-			//else
-			//	pixelsOut.data[outIndex] = 0;
+      var dx = applyKernelAlphaOnPixel(pixels, kernelx, x, y);
+      var dy = applyKernelAlphaOnPixel(pixels, kernely, x, y);
+      var c = Math.floor(Math.sqrt(dx*dx+dy*dy));
+      if (c != 0) {
+        //console.log(x, y, c);
+        pointsOut.push({x: x, y: y});
+      }
+      pixelsOut.data[outIndex] = c;
 			outIndex++;
 		}
 	}

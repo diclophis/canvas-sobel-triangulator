@@ -123,11 +123,33 @@ function handleTestClick()
 
   var x, y;
 
-  applyKernelAlphaOnPixels(bwPixels, dxx, dyy, bwPixelsSobolev)
+  var points = new Array();
 
+  applyKernelAlphaOnPixels(bwPixels, dxx, dyy, bwPixelsSobolev, points)
+
+  console.log(points.length);
+
+  simplifiedPoints = simplify(points, 16);
+
+  console.log(simplifiedPoints.length);
+  
   var grayPixels = A2RGBA(bwPixelsSobolev, context);
   
-  contextOut.putImageData(grayPixels, 0,0);
+  //contextOut.putImageData(grayPixels, 0,0);
+
+  contextOut.fillStyle = 'green';
+  for (var i=0; i<points.length; i++) {
+    //console.log(simplifiedPoints[i]);
+    //contextOut.arc(simplifiedPoints[i].x, simplifiedPoints[i].y, 10, 0, 2 * Math.PI);
+    contextOut.fillRect(points[i].x, points[i].y, 1, 1);
+  }
+
+  contextOut.fillStyle = 'red';
+  for (var i=0; i<simplifiedPoints.length; i++) {
+    //console.log(simplifiedPoints[i]);
+    //contextOut.arc(simplifiedPoints[i].x, simplifiedPoints[i].y, 10, 0, 2 * Math.PI);
+    contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 2, 2);
+  }
 }
 
 var step = function (timestamp) {

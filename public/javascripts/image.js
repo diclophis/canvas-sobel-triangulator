@@ -55,12 +55,25 @@ function createImageDataA(width, height)
 	return out;
 }
 
-var dxx = {data:[-1,0,1,  
-		 -2,0,2,  
-		 -1,0,1], width:3, height:3, scale:1};
-var dyy = {data:[-1,-2,-1,  
-		  0,0,0,  
-		  1,2,1], width:3, height:3, scale:1};
+/*
+var dxx = {
+  data:[-1,0,1,  
+		    -2,0,2,  
+		    -1,0,1], width:3, height:3, scale:1.0};
+var dyy = {
+  data:[-1,-2,-1,  
+		     0,0,0,  
+		     1,2,1], width:3, height:3, scale:1.0};
+*/
+
+var dxx = {
+  data:[-1,0,1,  
+		    -1,0,1,  
+		    -1,0,1], width:3, height:3, scale:1.0};
+var dyy = {
+  data:[1,2,1,  
+		     0,0,0,  
+		     -1,-2,-1], width:3, height:3, scale:1.0};
 
 function applyKernelAlphaOnPixel(pixels, kernel, x, y)
 {
@@ -93,7 +106,7 @@ function applyKernelAlphaOnPixels(pixels, kernelx, kernely, pixelsOut, pointsOut
       var dx = applyKernelAlphaOnPixel(pixels, kernelx, x, y);
       var dy = applyKernelAlphaOnPixel(pixels, kernely, x, y);
       var c = Math.floor(Math.sqrt(dx*dx+dy*dy));
-      if (c != 0) {
+      if (c > 0) { // && (outIndex % 4) == 0) {
         //console.log(x, y, c);
         pointsOut.push({x: x, y: y});
       }

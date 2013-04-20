@@ -8,4 +8,5 @@ canvas {
   background-color: yellow;
   width: 256px;
   height: 256px;
+  transform: translate3d(128px, 128px, 0) scale3d(2.0, 2.0, 2.0);
 }

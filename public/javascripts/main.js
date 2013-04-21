@@ -18,6 +18,18 @@ var contextOut = canvasOut.getContext('2d');
 var canvasTri = document.createElement('canvas');
 var contextTri = canvasTri.getContext('2d');
 
+  var polygonPath = function(ctx, points) {
+    ctx.beginPath();
+    points.forEach(function(point, index) {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+    ctx.closePath();
+  };
+
 var sortFuncCenteredAt = function(center) {
 
   var fixBool = function(b) {
@@ -41,16 +53,12 @@ var sortFuncCenteredAt = function(center) {
     // compute the cross product of vectors (center -> a) x (center -> b)
     var det = (a.x-center.x) * (b.y-center.y) - (b.x - center.x) * (a.y - center.y);
 
-    return det;
-
     if (det < 0) {
       return fixBool(true);
     }
     if (det > 0) {
       return fixBool(false);
     }
-
-    return 0;
 
     // points a and b are on the same line from the center
     // check which point is closer to the center
@@ -69,6 +77,24 @@ var sortFuncCenteredAt = function(center) {
     } else {
       return 0;
     }
+  };
+
+  var sortClockwise3 = function(a, b) {
+    // compute the cross product of vectors (center -> a) x (center -> b)
+    var det = (a.x-center.x) * (b.y-center.y) - (b.x - center.x) * (a.y - center.y);
+    if (det < 0) {
+      return -1;
+    } else if (det > 0) {
+      return 1;
+    } else {
+      return 0;
+    }
+  };
+
+  var sortClockwise4 = function(a, b) {
+    var dx2 = (b.x - a.x) ^ 2;
+    var dy2 = (b.y - a.y) ^ 2;
+    return Math.sqrt(dx2 + dy2);
   };
 
   return sortClockwise2;
@@ -94,10 +120,13 @@ var mergeVertices = function(vertices, precision) {
 
   for (i = 0, il = vertices.length; i < il; i++) {
     var v = vertices[i];
-    var key = [Math.floor(v.x / precision) * precision, Math.floor(v.y / precision) * precision].join( '_' );
+    var rx = Math.floor(v.x / precision) * precision;
+    var ry = Math.floor(v.y / precision) * precision;
+    var key = [rx, ry].join('_');
     if (verticesMap[key] === undefined) {
       verticesMap[key] = i;
-      unique.push(vertices[i]);
+      unique.push({x: rx, y: ry});
+      //unique.push(vertices[i]);
     } else {
       //console.log('Duplicate vertex found. ', i, ' could be using ', key, v.x, v.y);
     }
@@ -109,80 +138,60 @@ var mergeVertices = function(vertices, precision) {
 var hist = {};
 function handleTestClick()
 {
-  var pixels = context.getImageData(0,0, canvas.width, canvas.height);
+  var pixels = context.getImageData(0, 0, canvas.width, canvas.height);
 
   var bwPixels = RGBA2A(pixels, context);
   var bwPixelsSobolev = RGBA2A(pixels, context);
 
-  var x, y;
-
   var points = new Array();
 
   applyKernelAlphaOnPixels(bwPixels, dxx, dyy, bwPixelsSobolev, points)
+  //var grayPixels = A2RGBA(bwPixelsSobolev, context);
+  //contextOut.putImageData(grayPixels, 0,0);
 
-  var p = 8;
-  var p2 = 4;
+  var p = 4;
+  var p2 = 1;
   var p3 = 1;
 
   var mergedPoints = mergeVertices(points, p);
 
   var centroid = get_polygon_centroid(points);
-
+  contextOut.fillStyle = 'black';
+  contextOut.fillRect(centroid.x, centroid.y, 1, 1);
   var sortFunc = sortFuncCenteredAt(centroid);
 
   mergedPoints.sort(sortFunc);
 
-  simplifiedPoints = simplify(mergedPoints, p2, false);
+  //var simplifiedPoints = simplify(mergedPoints, p2, false);
 
-  simplifiedMergedPoints = mergeVertices(simplifiedPoints, p3);
-
-  //var grayPixels = A2RGBA(bwPixelsSobolev, context);
-  //contextOut.putImageData(grayPixels, 0,0);
+  //var simplifiedMergedPoints = mergeVertices(simplifiedPoints, p3);
 
   //console.log("unmerged", points.length);
   //console.log("merged", mergedPoints.length);
   //console.log("simplified", simplifiedPoints.length);
   //console.log("simplifiedMerged", simplifiedMergedPoints.length);
 
-  contextOut.fillStyle = 'black';
-  contextOut.fillRect(centroid.x, centroid.y, 1, 1);
-
-  contextOut.fillStyle = 'green';
-  for (var i=0; i<points.length; i++) {
-    contextOut.fillRect(points[i].x, points[i].y, 1, 1);
-  }
-
-  //contextOut.fillStyle = 'purple';
-  //for (var i=0; i<mergedPoints.length; i++) {
-  //  contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
+  //contextOut.fillStyle = 'green';
+  //for (var i=0; i<points.length; i++) {
+  //  contextOut.fillRect(points[i].x, points[i].y, 1, 1);
   //}
+
+  contextOut.fillStyle = 'purple';
+  for (var i=0; i<mergedPoints.length; i++) {
+    contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
+  }
 
   //contextOut.fillStyle = 'red';
   //for (var i=0; i<simplifiedPoints.length; i++) {
-  //  contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 1, 1);
+  //  contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 3, 3);
   //}
 
-  contextOut.fillStyle = 'blue';
-  for (var i=0; i<simplifiedMergedPoints.length; i++) {
-    contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 3, 3);
-  }
+  //contextOut.fillStyle = 'blue';
+  //for (var i=0; i<simplifiedMergedPoints.length; i++) {
+  //  contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 3, 3);
+  //}
 
-  var swctx = new poly2tri.SweepContext(simplifiedMergedPoints);
-  swctx.addPoint(centroid);
-  swctx.triangulate();
-  var triangles = swctx.getTriangles();
-
-  var polygonPath = function(ctx, points) {
-    ctx.beginPath();
-    points.forEach(function(point, index) {
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
-    });
-    ctx.closePath();
-  };
+  var pointsToTriangulate = mergedPoints;
 
   var TRIANGLE_FILL_STYLE = "#e0c4ef";
   var TRIANGLE_STROKE_STYLE = "#911ccd";
@@ -193,34 +202,40 @@ function handleTestClick()
   var MARGIN = 64;
 
   // auto scale / translate
-  bounds = swctx.getBoundingBox();
-  xscale = (contextTri.canvas.width - 2 * MARGIN) / (bounds.max.x - bounds.min.x);
-  yscale = (contextTri.canvas.height - 2 * MARGIN) / (bounds.max.y - bounds.min.y);
-  scale = Math.min(xscale, yscale);
-  contextTri.translate(MARGIN, MARGIN);
-  contextTri.scale(scale, scale);
-  contextTri.translate(-bounds.min.x, -bounds.min.y);
-  linescale = 1 / scale;
+  //bounds = swctx.getBoundingBox();
+  //xscale = (contextTri.canvas.width - 2 * MARGIN) / (bounds.max.x - bounds.min.x);
+  //yscale = (contextTri.canvas.height - 2 * MARGIN) / (bounds.max.y - bounds.min.y);
+  //scale = Math.min(xscale, yscale);
+  //contextTri.translate(MARGIN, MARGIN);
+  //contextTri.scale(scale, scale);
+  //contextTri.translate(-bounds.min.x, -bounds.min.y);
+  //linescale = 1 / scale;
+  var linescale = 1;
 
-  /*
   // draw constraints
-  contextTri.lineWidth = 4 * linescale;
+  contextTri.lineWidth = 1; //4 * linescale;
   contextTri.strokeStyle = CONSTRAINT_STYLE;
   contextTri.fillStyle = CONSTRAINT_STYLE;
-  polygonPath(contextTri, simplifiedMergedPoints);
+  polygonPath(contextTri, pointsToTriangulate);
   contextTri.stroke();
-  */
 
-  // draw result
-  contextTri.lineWidth = linescale;
-  contextTri.fillStyle = TRIANGLE_FILL_STYLE;
-  contextTri.strokeStyle = TRIANGLE_STROKE_STYLE;
+  var swctx = new poly2tri.SweepContext(pointsToTriangulate, {cloneArrays: true});
+  //swctx.addPoint(centroid);
+  swctx.triangulate();
+  var triangles = swctx.getTriangles();
 
-  triangles.forEach(function(t) {
-    polygonPath(contextTri, [t.getPoint(0), t.getPoint(1), t.getPoint(2)]);
-    contextTri.fill();
-    contextTri.stroke();
-  });
+  if (true) {
+    // draw result
+    contextTri.lineWidth = linescale;
+    contextTri.fillStyle = TRIANGLE_FILL_STYLE;
+    contextTri.strokeStyle = TRIANGLE_STROKE_STYLE;
+
+    triangles.forEach(function(t) {
+      polygonPath(contextTri, [t.getPoint(0), t.getPoint(1), t.getPoint(2)]);
+      contextTri.fill();
+      contextTri.stroke();
+    });
+  }
 
   //holes.forEach(function(hole) {
   //    polygonPath(ctx, hole);

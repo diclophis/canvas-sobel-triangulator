@@ -6,6 +6,7 @@
   window.requestAnimationFrame = requestAnimationFrame;
 })();
 
+var paused = false;
 var time = 0;
 var points = [];
 var pixels, bwPixels;
@@ -33,11 +34,10 @@ var contextTri = canvasTri.getContext('2d');
 var sortFuncCenteredAt = function(center) {
 
   var fixBool = function(b) {
-  return 0;
     if (b) {
-      return -1;
-    } else {
       return 1;
+    } else {
+      return -1;
     }
   };
 
@@ -71,9 +71,9 @@ var sortFuncCenteredAt = function(center) {
     var aa = Math.atan2(a.y - center.y, a.x - center.x);
     var bb = Math.atan2(b.y - center.y, b.x - center.x);
     if (aa > bb) {
-      return 1;
-    } else if (aa < bb) {
       return -1;
+    } else if (aa < bb) {
+      return 1;
     } else {
       return 0;
     }
@@ -120,12 +120,46 @@ var mergeVertices = function(vertices, precision) {
 
   for (i = 0, il = vertices.length; i < il; i++) {
     var v = vertices[i];
-    var rx = Math.floor(v.x / precision) * precision;
-    var ry = Math.floor(v.y / precision) * precision;
-    var key = [rx, ry].join('_');
-    if (verticesMap[key] === undefined) {
-      verticesMap[key] = i;
-      unique.push({x: rx, y: ry});
+    /*
+    var rx = Math.round(v.x / precision) * precision;
+    if (rx < v.x) {
+      rx += precision;
+    } else {
+      rx -= precision;
+    }
+    */
+    /*
+    var ry = Math.round(v.y / precision) * precision;
+    if (ry < v.y) {
+      ry += precision / 2;
+    } else {
+      ry -= precision / 2;
+    }
+    */
+
+    var rx0 = Math.round(v.x / precision) * precision;
+    var ry0 = Math.round(v.y / precision) * precision;
+    var rx1 = Math.floor(v.x / precision) * precision;
+    var ry1 = Math.floor(v.y / precision) * precision;
+    var rx2 = Math.ceil(v.x / precision) * precision;
+    var ry2 = Math.ceil(v.y / precision) * precision;
+
+    //var rx = Math.floor(v.x * (1 / precision)) * precision;
+    //var ry = Math.floor(v.y * (1 / precision)) * precision;
+    //var rx = (v.x % precision) * precision;
+    //var ry = (v.y % precision) * precision;
+    var key0 = [rx0, ry0].join('_');
+    var key1 = [rx1, ry1].join('_');
+    var key2 = [rx2, ry2].join('_');
+    if (
+      verticesMap[key0] === undefined &&
+      verticesMap[key1] === undefined &&
+      verticesMap[key2] === undefined
+    ) {
+      verticesMap[key0] = i;
+      verticesMap[key1] = i;
+      verticesMap[key2] = i;
+      unique.push({x: rx0, y: ry0});
       //unique.push(vertices[i]);
     } else {
       //console.log('Duplicate vertex found. ', i, ' could be using ', key, v.x, v.y);
@@ -162,7 +196,7 @@ function handleTestClick()
 
   mergedPoints.sort(sortFunc);
 
-  //var simplifiedPoints = simplify(mergedPoints, p2, false);
+  var simplifiedPoints = simplify(mergedPoints, p2, false);
 
   //var simplifiedMergedPoints = mergeVertices(simplifiedPoints, p3);
 
@@ -171,27 +205,27 @@ function handleTestClick()
   //console.log("simplified", simplifiedPoints.length);
   //console.log("simplifiedMerged", simplifiedMergedPoints.length);
 
-  //contextOut.fillStyle = 'green';
-  //for (var i=0; i<points.length; i++) {
-  //  contextOut.fillRect(points[i].x, points[i].y, 1, 1);
-  //}
+  contextOut.fillStyle = 'green';
+  for (var i=0; i<points.length; i++) {
+    contextOut.fillRect(points[i].x, points[i].y, 1, 1);
+  }
 
   contextOut.fillStyle = 'purple';
   for (var i=0; i<mergedPoints.length; i++) {
-    contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 1, 1);
+    contextOut.fillRect(mergedPoints[i].x, mergedPoints[i].y, 2, 2);
   }
 
-  //contextOut.fillStyle = 'red';
-  //for (var i=0; i<simplifiedPoints.length; i++) {
-  //  contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 3, 3);
-  //}
+  contextOut.fillStyle = 'red';
+  for (var i=0; i<simplifiedPoints.length; i++) {
+    contextOut.fillRect(simplifiedPoints[i].x, simplifiedPoints[i].y, 4, 4);
+  }
 
   //contextOut.fillStyle = 'blue';
   //for (var i=0; i<simplifiedMergedPoints.length; i++) {
   //  contextOut.fillRect(simplifiedMergedPoints[i].x, simplifiedMergedPoints[i].y, 3, 3);
   //}
 
-  var pointsToTriangulate = mergedPoints;
+  var pointsToTriangulate = simplifiedPoints;
 
   var TRIANGLE_FILL_STYLE = "#e0c4ef";
   var TRIANGLE_STROKE_STYLE = "#911ccd";
@@ -220,7 +254,7 @@ function handleTestClick()
   contextTri.stroke();
 
   var swctx = new poly2tri.SweepContext(pointsToTriangulate, {cloneArrays: true});
-  //swctx.addPoint(centroid);
+  swctx.addPoint(centroid);
   swctx.triangulate();
   var triangles = swctx.getTriangles();
 
@@ -266,10 +300,11 @@ var step = function (timestamp) {
   contextOut.clearRect(0, 0, canvas.width, canvas.height);
   contextTri.clearRect(0, 0, canvas.width, canvas.height);
 
-  context.fillStyle = 'red';
+  context.fillStyle = 'black';
   context.fillRect(64, 64, 32, 32);
-  context.fillRect(64 + ((Math.sin(time * 0.0005) * 30.0)), 64 + ((Math.sin(time * 0.0005) * 30.0)), 32, 32);
+  context.fillRect(64 + ((Math.sin(time * 0.0005) * 15.0)), 64 + ((Math.sin(time * 0.0005) * 15.0)), 32, 32);
   context.beginPath();
+  context.fillStyle = 'white';
   context.arc(64 + ((Math.sin(time * 0.0005) * 16.0)), 64 + ((Math.cos(time * 0.0005) * 16.0)), 17, 0, 2 * Math.PI, false);
   context.closePath();
   context.fill();
@@ -278,11 +313,12 @@ var step = function (timestamp) {
   handleTestClick();
   contextTri.restore();
 
-  window.requestAnimationFrame(step);
+  if (!paused) {
+    window.requestAnimationFrame(step);
+  }
 };
 
 var main = function(ev) {
-
   document.body.appendChild(canvas);
   canvas.width = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;

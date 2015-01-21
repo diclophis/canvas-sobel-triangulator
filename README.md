@@ -1,3 +1,14 @@
+# Canvas Sobel Triangulator
+
+    The Sobel operator, sometimes called Sobel Filter,
+    is used in image processing and computer vision,
+    particularly within edge detection algorithms,
+    and creates an image which emphasizes edges and transitions.
+
+http://en.wikipedia.org/wiki/Sobel_operator
+
+http://en.wikipedia.org/wiki/Polygon_triangulation
+
 https://github.com/kripken/box2d.js/
 
 http://code.google.com/p/poly2tri/source/browse/README.md?repo=javascript

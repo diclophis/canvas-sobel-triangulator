@@ -1,9 +1,17 @@
 # Canvas Sobel Triangulator
 
+![image](region-of-interest-into-polygon.png)
+
+This experiment detects "regions of interest" from a canvas object via a simple pixel filter.
+
     The Sobel operator, sometimes called Sobel Filter,
     is used in image processing and computer vision,
     particularly within edge detection algorithms,
     and creates an image which emphasizes edges and transitions.
+
+Once these points are extracted from the canvas object, they are sent through a point simplification filter to reduce the total number of points. These points are then used to create a convex polygon that roughly traces the original blob of pixels. This polygon is then triangulated so that it may be sent into a physics engine to compute collisions with other objects in the scene. In this manner it is then possible to use bitmap style "painting" techniques to construct/deconstruct objects that are then used to collide with other things.
+
+# Research
 
 http://en.wikipedia.org/wiki/Sobel_operator
 
